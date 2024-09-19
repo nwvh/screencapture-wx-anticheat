@@ -1,5 +1,5 @@
 {
-  "name": "nui",
+  "name": "@screencapture/vanilla",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,11 +9,10 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@types/three": "^0.168.0",
     "typescript": "^5.5.3",
     "vite": "^5.4.1"
   },
   "dependencies": {
-    "three": "^0.168.0"
+    "@screencapture/gameview": "workspace:*"
   }
 }

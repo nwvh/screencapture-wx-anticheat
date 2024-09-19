@@ -1,4 +1,4 @@
-import { createGameView } from "./gameview";
+import { createGameView } from "@screencapture/gameview";
 
 type CaptureRequest = {
   action: "capture";
