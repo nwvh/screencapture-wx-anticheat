@@ -1,0 +1,9 @@
+* {
+  background: transparent;
+  background-color: transparent;
+}
+
+body {
+  margin: 0; /* Remove default margin */
+  overflow: hidden; /* Prevent scrollbars */
+}
