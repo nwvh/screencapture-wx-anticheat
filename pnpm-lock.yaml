@@ -27,6 +27,18 @@ importers:
         specifier: ^8.3.0
         version: 8.3.0(postcss@8.4.47)(typescript@5.6.2)
 
+  packages/react:
+    devDependencies:
+      '@screencapture/gameview':
+        specifier: workspace:*
+        version: link:../gameview
+      '@screencapture/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      tsup:
+        specifier: ^8.3.0
+        version: 8.3.0(postcss@8.4.47)(typescript@5.6.2)
+
   packages/typescript-config: {}
 
   packages/vanilla:
