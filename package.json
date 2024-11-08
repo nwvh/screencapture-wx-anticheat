@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:gameview": "pnpm --filter @screencapture/gameview build"
+    "build:gameview": "pnpm --filter @screencapture/gameview build",
+    "build:game": "pnpm --filter @screencapture/game build",
+    "build:nui": "pnpm --filter @screencapture/nui build"
   },
   "keywords": [],
   "author": "itschip",

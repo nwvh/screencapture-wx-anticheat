@@ -2,10 +2,11 @@ fx_version "cerulean"
 
 game "gta5"
 
-client_script "game/client.lua"
+client_script "game/dist/client.js"
+server_script "game/dist/server.js"
 
-ui_page "nui/dist/index.html"
+ui_page "game/nui/dist/index.html"
 files {
-    "nui/dist/index.html",
-    "nui/dist/**/*",
+    "game/nui/dist/index.html",
+    "game/nui/dist/**/*",
 }
