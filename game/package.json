@@ -7,17 +7,22 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "pnpm run build:client && pnpm run build:server",
     "build:client": "tsup client/client.ts --format=cjs",
-    "build:server": "tsup server/server.ts --format=cjs"
+    "build:server": "esbuild server/server.ts --bundle --platform=node --outfile=dist/server.js"
   },
   "dependencies": {
+    "busboy": "^1.6.0",
+    "formidable": "^3.5.2",
     "koa": "^2.15.3"
   },
   "devDependencies": {
     "@citizenfx/client": "2.0.10822-1",
     "@citizenfx/server": "2.0.7290-1",
     "@screencapture/typescript-config": "workspace:*",
+    "@types/busboy": "^1.5.4",
+    "@types/formidable": "^3.4.5",
     "@types/koa": "^2.15.0",
     "@types/node": "^22.8.6",
+    "esbuild": "^0.24.0",
     "tsup": "^8.3.0"
   },
   "keywords": [],

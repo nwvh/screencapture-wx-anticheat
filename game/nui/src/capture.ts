@@ -1,11 +1,15 @@
 import { createGameView } from '@screencapture/gameview';
 
+type Encoding = "webp" | "jpg" | "png"
+
 type CaptureRequest = {
   action: 'capture';
   url: string;
-  encoding: 'jpg' | 'png' | 'webp';
+  encoding: Encoding
+  quality: number;
   headers: Headers;
   serverEndpoint: string;
+  formField: string;
 };
 
 export class Capture {
@@ -17,7 +21,7 @@ export class Capture {
       const data = event.data as CaptureRequest;
 
       if (data.action === 'capture') {
-        console.log("data", data)
+        console.log('data', data);
         await this.captureScreen(data);
       }
     });
@@ -36,37 +40,60 @@ export class Capture {
 
     this.#gameView = createGameView(this.#canvas);
 
-    const image = await this.createBlob(this.#canvas);
-    console.log('Image', image);
+    let imageData: string | Blob;
+    if (request.serverEndpoint || !request.formField) {
+      imageData = await this.createDataURL(this.#canvas);
+    } else {
+      const enc = request.encoding ?? "webp"
+      const qlty = request.quality ?? 0.7
+      imageData = await this.createBlob(this.#canvas, enc, qlty);
+    }
 
-    if (!image) return console.error('No image available');
-    await this.httpUploadImage(request, image);
+    if (!imageData) return console.error('No image available');
 
+    await this.httpUploadImage(request, imageData);
     this.#canvas.remove();
   }
 
-  async httpUploadImage(request: CaptureRequest, blob: Blob) {
-    const enc = request.encoding ?? 'webp';
-    console.log('Uploading image to server');
-    console.log(request.url, enc);
-    console.log(blob);
+  async httpUploadImage(request: CaptureRequest, imageData: string | Blob) {
+    const reqBody = this.createRequestBody(request, imageData)
 
-    console.log('server url', request.serverEndpoint);
-
-    try {
-      await fetch(request.serverEndpoint, {
-        method: 'POST',
-        mode: 'cors',
-        body: JSON.stringify({
-          size: blob.size,
-        }),
-      });
-    } catch (err) {
-      console.error(err);
+    if (request.serverEndpoint) {
+      try {
+        await fetch(request.serverEndpoint, {
+          method: 'POST',
+          mode: 'cors',
+          body: reqBody,
+        });
+      } catch (err) {
+        console.error(err);
+      }
     }
   }
 
-  createBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  createRequestBody(request: CaptureRequest, imageData: string | Blob): BodyInit {
+    if (imageData instanceof Blob) {
+      const formData = new FormData();
+      formData.append(request.formField, imageData);
+      return formData;
+    }
+    
+    return JSON.stringify({ data: imageData });
+  }
+  
+
+  createDataURL(canvas: HTMLCanvasElement): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const url = canvas.toDataURL('image/webp', 0.7);
+      if (!url) {
+        reject('No data URL available');
+      }
+
+      resolve(url);
+    });
+  }
+
+  createBlob(canvas: HTMLCanvasElement, enc: Encoding, quality = 0.7): Promise<Blob> {
     return new Promise((resolve, reject) => {
       canvas.toBlob(
         (blob) => {
@@ -76,8 +103,8 @@ export class Capture {
             reject('No blob available');
           }
         },
-        'image/webp',
-        0.5,
+        `image/${enc}`,
+        quality,
       );
     });
   }

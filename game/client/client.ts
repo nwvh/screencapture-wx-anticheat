@@ -3,6 +3,6 @@ RegisterCommand("capture", () => {
     SendNUIMessage({
         action: "capture",
         url: "https://www.uploadurl.com",
-        serverEndpoint: `https://${GetCurrentServerEndpoint()}/${GetCurrentResourceName()}/upload`
+        serverEndpoint: `http://${GetCurrentServerEndpoint()}/${GetCurrentResourceName()}/upload`
     })
 }, false)
