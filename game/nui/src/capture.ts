@@ -8,6 +8,7 @@ type CaptureRequest = {
   encoding: Encoding
   quality: number;
   headers: Headers;
+  uploadToken: string, 
   serverEndpoint: string;
   formField: string;
 };
@@ -21,7 +22,7 @@ export class Capture {
       const data = event.data as CaptureRequest;
 
       if (data.action === 'capture') {
-        console.log('data', data);
+        console.log(data)
         await this.captureScreen(data);
       }
     });
@@ -62,7 +63,10 @@ export class Capture {
       try {
         await fetch(request.serverEndpoint, {
           method: 'POST',
-          mode: 'cors',
+          headers: {
+            "X-ScreenCapture-Token": request.uploadToken,
+            "Content-Type": "application/json"
+          },
           body: reqBody,
         });
       } catch (err) {
@@ -78,9 +82,8 @@ export class Capture {
       return formData;
     }
     
-    return JSON.stringify({ data: imageData });
+    return JSON.stringify({ imageData: imageData });
   }
-  
 
   createDataURL(canvas: HTMLCanvasElement): Promise<string> {
     return new Promise((resolve, reject) => {

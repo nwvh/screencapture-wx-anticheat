@@ -1,7 +1,9 @@
 {
 	"extends": "@screencapture/typescript-config/base.json",
   "compilerOptions": {
-    "types": ["@types/node", "@citizenfx/server"]
+    "types": ["@types/node", "@citizenfx/server"],
+    "moduleResolution": "node",
+    "module": "CommonJS"
   },
   "include": ["**/*.ts"]
 }
