@@ -1,4 +1,4 @@
-import { CallbackData, CallbackFn } from './export';
+import { CallbackFn } from './export';
 import { nanoid } from 'nanoid';
 
 type CfxRequest = {
@@ -20,6 +20,11 @@ type UploadData = {
   callback: CallbackFn;
 };
 
+type RequestBody = {    
+  imageData: string;
+  dataType: "base64" | "buffer"
+}
+
 export class Router {
   #uploadMap: Map<string, UploadData>;
 
@@ -30,26 +35,42 @@ export class Router {
       console.log('url path', req.path, 'method', req.method);
 
       req.setDataHandler((data) => {
-        const body = JSON.parse(data) as CallbackData;
+        const body = JSON.parse(data) as RequestBody;
         const token = req.headers["X-ScreenCapture-Token"] as string;
 
-        try {
-          const cb = this.getUpload(token);
-          cb({
-            imageData: body.imageData,
-          });
-        } catch (err) {
-          if (err instanceof Error) {
-            console.error(err.message);
-            res.writeHead(500);
-            res.write(JSON.stringify({ status: 'error', message: err.message }));
-            return res.send();
-          }
-        }
+        if (req.path === "/upload") {
+          try {
+            const cb = this.getUpload(token);
 
-        res.writeHead(200);
-        res.write(JSON.stringify({ status: 'ok' }));
-        res.send();
+            if (body.dataType === "buffer") {
+              const matches = body.imageData.match(/^data:(.+);base64,(.+)$/);
+              if (!matches || matches.length !== 3) {
+                throw new Error('Invalid base64 string');
+              }
+
+              const base64Data = matches[2];
+              if (!base64Data) return console.log('Failed to find base64 data');
+        
+              const buffer = Buffer.from(base64Data, 'base64');
+              const uint8Array = Array.from(buffer)
+
+              cb(uint8Array)
+            } else {
+              cb(body.imageData);
+            }
+          } catch (err) {
+            if (err instanceof Error) {
+              console.error(err.message);
+              res.writeHead(500);
+              res.write(JSON.stringify({ status: 'error', message: err.message }));
+              return res.send();
+            }
+          }
+  
+          res.writeHead(200);
+          res.write(JSON.stringify({ status: 'ok' }));
+          res.send(); 
+        }
       });
     });
   }

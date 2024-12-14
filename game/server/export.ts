@@ -8,17 +8,16 @@ type CaptureOptions = {
 }
 
 export type CallbackData = {
-    uploadToken: string;
-    imageData: string;
+    imageData: string | Buffer<ArrayBuffer>
+    dataType: string;
 }
 
-export type CallbackFn = (data: Pick<CallbackData, 'imageData'>) => void;
+export type CallbackFn = (data: any) => void;
 
 global.exports("serverRemoteUpload", () => {
-
 })
 
-global.exports("serverCapture", (source: number, options: CaptureOptions, callback: CallbackFn) => {
+global.exports("serverCapture", (source: number, callback: CallbackFn, options: CaptureOptions, dataType = "base64") => {
     const token = router.addUpload(callback)
-    emitNet("screencapture:captureScreen", source, token, options)
+    emitNet("screencapture:captureScreen", source, token, options, dataType)
 })

@@ -11,6 +11,7 @@ type CaptureRequest = {
   uploadToken: string, 
   serverEndpoint: string;
   formField: string;
+  dataType: 'buffer' | 'base64'
 };
 
 export class Capture {
@@ -46,7 +47,7 @@ export class Capture {
       imageData = await this.createDataURL(this.#canvas);
     } else {
       const enc = request.encoding ?? "webp"
-      const qlty = request.quality ?? 0.7
+      const qlty = request.quality ?? 0.5
       imageData = await this.createBlob(this.#canvas, enc, qlty);
     }
 
@@ -82,7 +83,7 @@ export class Capture {
       return formData;
     }
     
-    return JSON.stringify({ imageData: imageData });
+    return JSON.stringify({ imageData: imageData, dataType: request.dataType });
   }
 
   createDataURL(canvas: HTMLCanvasElement): Promise<string> {

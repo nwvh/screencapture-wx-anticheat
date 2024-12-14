@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:gameview": "pnpm --filter @screencapture/gameview build",
     "build:game": "pnpm --filter @screencapture/game build",
-    "build:nui": "pnpm --filter @screencapture/nui build"
+    "build:nui": "pnpm --filter @screencapture/nui build",
+    "build": "pnpm turbo build"
   },
   "keywords": [],
   "author": "itschip",
@@ -15,5 +16,6 @@
     "prettier": "^3.3.3",
     "turbo": "^2.1.2",
     "typescript": "^5.5.3"
-  }
+  },
+  "packageManager": "pnpm@9.11.0"
 }
