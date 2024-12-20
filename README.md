@@ -8,7 +8,7 @@ I'll explain this later, but breifly - Screenshot-Basic is no longer maintained,
 
 ## How to use
 
-ScreenCapture is still WIP, but you are able to the minimum if you're using Node.js. Note that there's only server-side exports at the moment. I might add client exports, but only if there's enough requests for it. There will also be an export that will upload through NUI, even though this might be redundant - we'll see.
+Note that there's only server-side exports at the moment. I might add client exports, but only if there's enough requests for it. There will also be an export that will upload through NUI, even though this might be redundant - we'll see.
 
 ### JavaScript / TypeScript
 
@@ -104,6 +104,6 @@ end, "blob")
 
 ## What will this include?
 1. Server exports both for getting image data and uploading images/videos from the server
-2. Client exports
+2. Client exports (maybe)
 3. Upload images or videos from NUI, just more secure.
 4. React, Svelt and Vue packages + publishing all internal packages like @screencapture/gameview (SoonTM)
