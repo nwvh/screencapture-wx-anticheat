@@ -8,24 +8,56 @@ I'll explain this later, but breifly - Screenshot-Basic is no longer maintained,
 
 ## How to use
 
-ScreenCapture is still WIP, but you are able to the minimum if you're using Node.js.
+ScreenCapture is still WIP, but you are able to the minimum if you're using Node.js. Note that there's only server-side exports at the moment. I might add client exports, but only if there's enough requests for it. There will also be an export that will upload through NUI, even though this might be redundant - we'll see.
 
-This is a server export only.
+### JavaScript / TypeScript
+
+Converting Base64 to Blob/Buffer is easy enough with Node, but Lua ScRT in FiveM doesn't really offer that functionality, so if you wish to use the `serverCapture` export, you'll need to use Base64. More on that later.
+
+### serverCapture (server-side export)
+
+| Parameter  | Type                     | Description                                       |
+|------------|--------------------------|---------------------------------------------------|
+| `source`   | string                   | Player to capture                                 |
+| `options`  | object/table             | Configuration options for the capture             |
+| `callback` | function                 | A function invoked with the captured data         |
+| `dataType` | string (default: base64) | What data should be returned through the callback |
+
+
+Depending on what you need, the last argument accepts two values: `blob` and `base64`. 
+
 ```ts
-exp.screencapture.serverCapture(args[0], (data: string | number[]>) => {
-        data = Buffer.from(data) // if you're using 'buffer' instead of 'base64'
+RegisterCommand(
+  'capture',
+  (_: string, args: string[]) => {
+    exp.screencapture.serverCapture(
+      args[0],
+      { encoding: 'webp' },
+      (data: string | Buffer<ArrayBuffer>) => {
+        data = Buffer.from(data as ArrayBuffer);
 
-        fs.writeFileSync('./buffer_image.png', data);
+        fs.writeFileSync('./blob_image.webp', data);
         console.log(`File saved`);
-    },
-    {
-        encoding: 'webp',
-        // other options like headers, formField, filename
-    },
-    'base64', // or 'buffer'
+      },
+      'blob',
+    );
+  },
+  false,
 );
 ```
 
+```ts
+RegisterCommand("remoteCapture", (_: string, args: string[]) => {
+  exp.screencapture.remoteUpload(args[0], "https://api.fivemanage.com/api/image", {
+    encoding: "webp",
+    headers: {
+      "Authorization": "",
+    }
+  }, (data: any) => {
+    console.log(data);
+  }, "blob")
+}, false);
+```
 
 ## What will this include?
 1. Server exports both for getting image data and uploading images/videos from the server
