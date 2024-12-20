@@ -1,5 +1,7 @@
 fx_version 'bodacious'
 
+version 'v0.0.1'
+
 game "gta5"
 
 client_script "game/dist/client.js"
