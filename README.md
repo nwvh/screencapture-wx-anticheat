@@ -55,7 +55,7 @@ RegisterCommand(
 );
 ```
 
-### remoteCapture (server-side export)
+### remoteUpload (server-side export)
 
 | Parameter  | Type                     | Description                                                               |
 |------------|--------------------------|---------------------------------------------------------------------------|
@@ -89,6 +89,17 @@ RegisterCommand("remoteCapture", (_: string, args: string[]) => {
 }, false);
 ```
 
+## Lua example with `remoteUpload`
+```lua
+exports.screencapture:remoteUpload(args[1], "https://api.fivemanage.com/api/image", {
+    encoding = "webp",
+    headers = {
+        ["Authorization"] = ""
+    }
+}, function(data)
+    print(data.url)
+end, "blob")
+```
 
 
 ## What will this include?
