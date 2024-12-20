@@ -16,12 +16,12 @@ Converting Base64 to Blob/Buffer is easy enough with Node, but Lua ScRT in FiveM
 
 ### serverCapture (server-side export)
 
-| Parameter  | Type                     | Description                                       |
-|------------|--------------------------|---------------------------------------------------|
-| `source`   | string                   | Player to capture                                 |
-| `options`  | object/table             | Configuration options for the capture             |
-| `callback` | function                 | A function invoked with the captured data         |
-| `dataType` | string (default: base64) | What data should be returned through the callback |
+| Parameter  | Type                     | Description                                                               |
+|------------|--------------------------|---------------------------------------------------------------------------|
+| `source`   | string                   | Player to capture                                                         |
+| `options`  | object/table             | Configuration options for the capture                                     |
+| `callback` | function                 | A function invoked with the captured data                                 |
+| `dataType` | string (default: base64) | What data should be returned through the callback: `'base64'` or `'blob'` |
 
 #### Options
 
@@ -34,8 +34,6 @@ The `options` argument accepts an object with the following fields:
 | `filename`   | `string`        | `null`   | Specifies the name of the file when saving or transmitting captured data.|
 | `encoding`   | `string`        | `'webp'` | Specifies the encoding format for the captured image (e.g., `'webp'`).   |
 
-
-Depending on what you need, the last argument accepts two values: `blob` and `base64`. 
 
 ```ts
 RegisterCommand(
