@@ -55,6 +55,27 @@ RegisterCommand(
 );
 ```
 
+### remoteCapture (server-side export)
+
+| Parameter  | Type                     | Description                                                               |
+|------------|--------------------------|---------------------------------------------------------------------------|
+| `source`   | string                   | Player to capture                                                         |
+| `url`   | string                      | The upload URL                                                            |
+| `options`  | object/table             | Configuration options for the capture                                     |
+| `callback` | function                 | Callback returning the HTTP response in JSON                              |
+| `dataType` | string (default: base64) | What data type should be used to upload the file: `'base64'` or `'blob'`  |
+
+#### Options
+
+The `options` argument accepts an object with the following fields:
+
+| Field        | Type            | Default  | Description                                                              |
+|--------------|-----------------|----------|--------------------------------------------------------------------------|
+| `headers`    | `object/table`  | `null`   | Optional HTTP headers to include in the capture request.                 |
+| `formField`  | `string`        | `null`   | The form field name to be used when uploading the captured data.         |
+| `filename`   | `string`        | `null`   | Specifies the name of the file when saving or transmitting captured data.|
+| `encoding`   | `string`        | `'webp'` | Specifies the encoding format for the captured image (e.g., `'webp'`).   |
+
 ```ts
 RegisterCommand("remoteCapture", (_: string, args: string[]) => {
   exp.screencapture.remoteUpload(args[0], "https://api.fivemanage.com/api/image", {
@@ -67,6 +88,8 @@ RegisterCommand("remoteCapture", (_: string, args: string[]) => {
   }, "blob")
 }, false);
 ```
+
+
 
 ## What will this include?
 1. Server exports both for getting image data and uploading images/videos from the server
