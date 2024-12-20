@@ -25,8 +25,6 @@ export class Router {
     this.#uploadMap = new Map<string, UploadData>();
 
     global.SetHttpHandler((req: CfxRequest, res: CfxResponse) => {
-      console.log('url path', req.path, 'method', req.method);
-
       req.setDataHandler(async (data) => {
         const body = JSON.parse(data) as RequestBody;
         const token = req.headers['X-ScreenCapture-Token'] as string;
@@ -122,7 +120,6 @@ export class Router {
       
       let response;
       if (body instanceof FormData) {
-        console.log("sending form data");
         response = await fetch(url, {
           method: 'POST',
           headers: {
@@ -163,8 +160,6 @@ export class Router {
         const formData = new FormData();
         const bufData = Buffer.from(buf);
         formData.append(formField || 'file', bufData, filename || 'screenshot.png');
-
-        console.log("created form data");
         return resolve(formData);
       }
 

@@ -23,7 +23,6 @@ export class Capture {
       const data = event.data as CaptureRequest;
 
       if (data.action === 'capture') {
-        console.log(data)
         await this.captureScreen(data);
       }
     });
@@ -90,7 +89,6 @@ export class Capture {
   createDataURL(canvas: HTMLCanvasElement): Promise<string> {
     return new Promise((resolve, reject) => {
       const url = canvas.toDataURL('image/webp', 0.7);
-      console.log("created data url")
       if (!url) {
         reject('No data URL available');
       }
