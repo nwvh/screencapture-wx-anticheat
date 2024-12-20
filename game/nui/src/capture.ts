@@ -11,7 +11,7 @@ type CaptureRequest = {
   uploadToken: string, 
   serverEndpoint: string;
   formField: string;
-  dataType: 'buffer' | 'base64'
+  dataType: 'blob' | 'base64'
 };
 
 export class Capture {
@@ -83,12 +83,14 @@ export class Capture {
       return formData;
     }
     
+    // dataType is just here in order to know what to do with the data when we get it back
     return JSON.stringify({ imageData: imageData, dataType: request.dataType });
   }
 
   createDataURL(canvas: HTMLCanvasElement): Promise<string> {
     return new Promise((resolve, reject) => {
       const url = canvas.toDataURL('image/webp', 0.7);
+      console.log("created data url")
       if (!url) {
         reject('No data URL available');
       }
