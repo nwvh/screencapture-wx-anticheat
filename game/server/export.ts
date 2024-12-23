@@ -8,7 +8,10 @@ global.exports(
     const token = router.addUpload({
       callback: callback,
       isRemote: true,
-      remoteConfig: options,
+      remoteConfig: {
+        ...options,
+        encoding: options.encoding ?? 'webp',
+      },
       url,
       dataType,
     });

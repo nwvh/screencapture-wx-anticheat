@@ -159,7 +159,7 @@ export class Router {
       if (Array.isArray(buf) && dataType === 'blob') {
         const formData = new FormData();
         const bufData = Buffer.from(buf);
-        formData.append(formField || 'file', bufData, filename || 'screenshot.png');
+        formData.append(formField || 'file', bufData, filename || `screenshot.${config.encoding}`);
         return resolve(formData);
       }
 
