@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid';
 import { CaptureOptions, DataType, RequestBody, UploadData } from './types';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
+import { parseFormData } from './form-data';
 
 type CfxRequest = {
   address: string;
@@ -43,7 +44,7 @@ export class Router {
             if (isRemote) {
               const response = await this.uploadFile(url, remoteConfig, buf, dataType);
               callback(response);
-            } else{
+            } else {
               callback(buf);
             }
           } catch (err) {
@@ -117,7 +118,7 @@ export class Router {
 
     try {
       const body = await this.createRequestBody(buf, dataType, config);
-      
+
       let response;
       if (body instanceof FormData) {
         response = await fetch(url, {
@@ -170,4 +171,27 @@ export class Router {
       return reject('Invalid body data');
     });
   }
+
+  getImageBuffer(contentType: string | undefined, data: ArrayBuffer) {
+    return new Promise((res, rej) => {
+      if (contentType && contentType.startsWith('multipart/form-data')) {
+        const boundaryMatch = contentType.match(/boundary=([^\s]+)/);
+        if (!boundaryMatch) {
+          return rej('Invalid boundary in multipart/form-data');
+        }
+
+        const boundary = `--${boundaryMatch[1]}`;
+        const body = Buffer.from(data);
+
+        const rawFormData = parseFormData(body, boundary);
+
+        const uint8Array = new Uint8Array(rawFormData.file.content);
+        const bufData = Buffer.from(uint8Array);
+
+        return res(bufData);
+      }
+    });
+  }
+
+  parseMultipart(data: string) {}
 }
