@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { CaptureOptions, DataType, RequestBody, UploadData } from './types';
+import { CaptureOptions, DataType, RequestBody, StreamUploadData, UploadData } from './types';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { parseFormData } from './form-data';
@@ -21,13 +21,14 @@ type CfxResponse = {
 
 export class Router {
   #uploadMap: Map<string, UploadData>;
+  #streamUploadMap: Map<string, StreamUploadData>;
 
   constructor() {
     this.#uploadMap = new Map<string, UploadData>();
+    this.#streamUploadMap = new Map<string, StreamUploadData>();
 
     global.SetHttpHandler((req: CfxRequest, res: CfxResponse) => {
       req.setDataHandler(async (data) => {
-        const body = JSON.parse(data) as RequestBody;
         const token = req.headers['X-ScreenCapture-Token'] as string;
         if (!token) {
           res.writeHead(403);
@@ -35,11 +36,16 @@ export class Router {
           return res.send();
         }
 
-        if (req.path === '/upload' && req.method === 'POST') {
+        if (req.path === '/image' && req.method === 'POST') {
           try {
             const { callback, dataType, isRemote, remoteConfig, url } = this.getUpload(token);
 
-            const buf = await this.buffer(dataType, body.imageData);
+            const contentType = req.headers['Content-Type'];
+            const rawForm = await this.rawFormData(contentType, data as unknown as ArrayBuffer);
+            const uint8Array = new Uint8Array(rawForm.file.content);
+            const bufData = Buffer.from(uint8Array);
+
+            const buf = await this.buffer(dataType, bufData);
 
             if (isRemote) {
               const response = await this.uploadFile(url, remoteConfig, buf, dataType);
@@ -58,9 +64,12 @@ export class Router {
 
           res.writeHead(200);
           res.write(JSON.stringify({ status: 'ok' }));
-          res.send();
+          return res.send();
         }
-      });
+
+        res.writeHead(404);
+        return res.send();
+      }, 'binary');
     });
   }
 
@@ -71,6 +80,20 @@ export class Router {
     this.#uploadMap.set(uploadToken, {
       callback,
       dataType,
+      isRemote,
+      remoteConfig,
+      url,
+    });
+
+    return uploadToken;
+  }
+
+  addStream(params: StreamUploadData): string {
+    const uploadToken = nanoid(24);
+    const { callback, isRemote, remoteConfig, url } = params;
+
+    this.#streamUploadMap.set(uploadToken, {
+      callback,
       isRemote,
       remoteConfig,
       url,
@@ -91,28 +114,31 @@ export class Router {
     return data;
   }
 
-  async buffer(dataType: DataType, imageData: string): Promise<string | number[]> {
-    return new Promise((resolve, reject) => {
-      if (dataType === 'blob') {
-        const matches = imageData.match(/^data:(.+);base64,(.+)$/);
-        if (!matches || matches.length !== 3) {
-          return reject('Invalid base64 string');
-        }
+  getStreamUpload(uploadToken: string): StreamUploadData {
+    const exists = this.#streamUploadMap.has(uploadToken);
+    if (!exists) {
+      throw new Error('Upload data does not exist. Cancelling screen capture.');
+    }
 
-        const base64Data = matches[2];
-        if (!base64Data) return reject('Failed to find base64 data');
+    const data = this.#streamUploadMap.get(uploadToken);
+    if (!data) throw new Error('Could not find upload data');
 
-        const buffer = Buffer.from(base64Data, 'base64');
-        const uint8Array = Array.from(buffer);
+    return data;
+  }
 
-        resolve(uint8Array);
+  async buffer(dataType: DataType, imageData: Buffer): Promise<string | Buffer> {
+    return new Promise(async (resolve, reject) => {
+      if (dataType === 'base64') {
+        const blob = new Blob([imageData]);
+        const dateURL = await this.blobToBase64(blob);
+        resolve(dateURL);
       } else {
         resolve(imageData);
       }
     });
   }
 
-  async uploadFile(url: string | undefined, config: CaptureOptions | null, buf: string | number[], dataType: DataType) {
+  async uploadFile(url: string | undefined, config: CaptureOptions | null, buf: string | Buffer, dataType: DataType) {
     if (!url) throw new Error('No remote URL provided');
     if (!config) throw new Error('No remote config provided');
 
@@ -153,14 +179,13 @@ export class Router {
     }
   }
 
-  createRequestBody(buf: string | number[], dataType: DataType, config: CaptureOptions): Promise<BodyInit | FormData> {
+  createRequestBody(buf: string | Buffer, dataType: DataType, config: CaptureOptions): Promise<BodyInit | FormData> {
     return new Promise((resolve, reject) => {
       const { formField, filename } = config;
 
-      if (Array.isArray(buf) && dataType === 'blob') {
+      if (dataType === 'blob') {
         const formData = new FormData();
-        const bufData = Buffer.from(buf);
-        formData.append(formField || 'file', bufData, filename || `screenshot.${config.encoding}`);
+        formData.append(formField || 'file', buf, filename || `screenshot.${config.encoding}`);
         return resolve(formData);
       }
 
@@ -172,7 +197,8 @@ export class Router {
     });
   }
 
-  getImageBuffer(contentType: string | undefined, data: ArrayBuffer) {
+  // todo: fix this return type
+  rawFormData(contentType: string | undefined, data: ArrayBuffer): Promise<any> {
     return new Promise((res, rej) => {
       if (contentType && contentType.startsWith('multipart/form-data')) {
         const boundaryMatch = contentType.match(/boundary=([^\s]+)/);
@@ -181,17 +207,23 @@ export class Router {
         }
 
         const boundary = `--${boundaryMatch[1]}`;
-        const body = Buffer.from(data);
+        const body = Buffer.from(data);``
 
         const rawFormData = parseFormData(body, boundary);
-
-        const uint8Array = new Uint8Array(rawFormData.file.content);
-        const bufData = Buffer.from(uint8Array);
-
-        return res(bufData);
+        return res(rawFormData);
       }
     });
   }
 
-  parseMultipart(data: string) {}
+  async blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+
+      reader.readAsDataURL(blob);
+    });
+  }
 }

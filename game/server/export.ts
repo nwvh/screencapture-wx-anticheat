@@ -1,6 +1,21 @@
 import { router } from './server';
 import { CallbackFn, CaptureOptions, DataType } from './types';
 
+/* global.exports("serverCaptureStream", (source: number) => {
+  const token = router.addStream({
+    callback: null,
+    isRemote: false,
+    remoteConfig: null,
+  })
+
+  emitNet("screencapture:captureStream", source, token, {})
+})
+
+// DO NOT USE
+global.exports("INTERNAL_stopServerCaptureStream", (source: number) => {
+  emitNet("screencapture:INTERNAL:stopCaptureStream", source)
+}) */
+
 // upload the file from the server and return the raw response
 global.exports(
   'remoteUpload',

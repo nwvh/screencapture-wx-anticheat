@@ -8,6 +8,13 @@ export interface UploadData {
   url?: string;
 }
 
+export interface StreamUploadData {
+  callback: CallbackFn | null
+  isRemote: boolean;
+  remoteConfig: CaptureOptions | null;
+  url?: string;
+}
+
 export interface RemoteConfig {
   url: string;
   headers?: HeadersInit;

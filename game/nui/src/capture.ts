@@ -66,7 +66,6 @@ export class Capture {
           method: 'POST',
           headers: {
             'X-ScreenCapture-Token': request.uploadToken,
-            "Content-Type": "application/json"
           },
           body: reqBody,
         });
