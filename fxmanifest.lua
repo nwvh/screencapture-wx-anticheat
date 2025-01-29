@@ -1,6 +1,6 @@
 fx_version 'bodacious'
 
-version '0.0.4'
+version '0.1.0'
 
 game "gta5"
 
