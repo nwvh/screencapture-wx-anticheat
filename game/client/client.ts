@@ -1,5 +1,6 @@
 import { netEventController } from './event';
 import { CaptureRequest, RequestScreenshotUploadCB } from './types';
+import { uuidv4 } from './utils';
 
 const clientCaptureMap = new Map<string, RequestScreenshotUploadCB>();
 
@@ -11,6 +12,14 @@ onNet('screencapture:captureScreen', (token: string, options: object, dataType: 
     action: 'capture',
     serverEndpoint: `http://${GetCurrentServerEndpoint()}/${GetCurrentResourceName()}/image`,
   });
+});
+
+onNet('screencapture:INTERNAL_uploadComplete', (response: unknown, correlationId: string) => {
+  const callback = clientCaptureMap.get(correlationId);
+  if (callback) {
+    callback(response);
+    clientCaptureMap.delete(correlationId);
+  }
 });
 
 global.exports(
@@ -30,9 +39,21 @@ global.exports(
       ? (callback as RequestScreenshotUploadCB)
       : (optionsOrCB as RequestScreenshotUploadCB);
 
-    const token = await netEventController('screencapture:INTERNAL_requestUploadToken', url);
+    const correlationId = uuidv4();
+    clientCaptureMap.set(correlationId, realCallback);
 
-    createImageCaptureMessage({
+    const token = await netEventController<string>('screencapture:INTERNAL_requestUploadToken', {
+      ...realOptions,
+      formField,
+      url,
+      correlationId,
+    });
+
+    if (!token) {
+      return console.error('Failed to get upload token');
+    }
+
+    return createImageCaptureMessage({
       ...realOptions,
       formField,
       url,
@@ -43,11 +64,11 @@ global.exports(
 );
 
 function createImageCaptureMessage(options: CaptureRequest) {
-  return {
+  SendNUIMessage({
     ...options,
     action: 'capture',
     serverEndpoint: `http://${GetCurrentServerEndpoint()}/${GetCurrentResourceName()}/image`,
-  };
+  });
 }
 
 /* onNet("screencapture:captureStream", (token: string, options: object) => {

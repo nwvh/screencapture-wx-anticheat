@@ -1,7 +1,7 @@
-import { customAlphabet } from 'nanoid';
+import { uuidv4 } from './utils';
 
-function uniqueId() {
-  return customAlphabet('1234567890abcdef', 21);
+export function uniqueId() {
+  return uuidv4();
 }
 
 export async function netEventController<TResponse>(event: string, ...args: any[]): Promise<TResponse> {

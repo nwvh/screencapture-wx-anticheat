@@ -1,11 +1,15 @@
 export type DataType = 'base64' | 'blob';
 
+type Encoding = 'webp' | 'jpg' | 'png';
+
 export interface UploadData {
   callback: CallbackFn;
   isRemote: boolean;
   remoteConfig: CaptureOptions | null;
   dataType: DataType;
   url?: string;
+  playerSource?: number;
+  correlationId?: string;
 }
 
 export interface StreamUploadData {
@@ -30,7 +34,7 @@ export interface CaptureOptions {
   encoding?: string;
 }
 
-export type CallbackFn = (data: unknown) => void;
+export type CallbackFn = (data: unknown, _playerSource?: number, correlationId?: string) => void;
 
 export interface CallbackData {
   imageData: string | Buffer<ArrayBuffer>;
@@ -41,3 +45,12 @@ export interface RequestBody {
   imageData: string;
   dataType: DataType;
 }
+
+export type RequestUploadToken = {
+  url: string;
+  encoding: Encoding;
+  quality: number;
+  headers: Headers;
+  correlationId: string;
+  filename: string;
+};

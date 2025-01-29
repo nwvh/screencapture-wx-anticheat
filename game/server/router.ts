@@ -38,7 +38,8 @@ export class Router {
 
         if (req.path === '/image' && req.method === 'POST') {
           try {
-            const { callback, dataType, isRemote, remoteConfig, url } = this.getUpload(token);
+            const { callback, dataType, isRemote, remoteConfig, url, playerSource, correlationId } =
+              this.getUpload(token);
 
             const contentType = req.headers['Content-Type'];
             const rawForm = await this.rawFormData(contentType, data as unknown as ArrayBuffer);
@@ -49,7 +50,13 @@ export class Router {
 
             if (isRemote) {
               const response = await this.uploadFile(url, remoteConfig, buf, dataType);
-              callback(response);
+
+              // this is only when we return data back to the client
+              if (playerSource && correlationId) {
+                callback(response, playerSource, correlationId);
+              } else {
+                callback(response);
+              }
             } else {
               callback(buf);
             }
@@ -75,15 +82,8 @@ export class Router {
 
   addUpload(params: UploadData): string {
     const uploadToken = nanoid(24);
-    const { callback, dataType, isRemote, remoteConfig, url } = params;
 
-    this.#uploadMap.set(uploadToken, {
-      callback,
-      dataType,
-      isRemote,
-      remoteConfig,
-      url,
-    });
+    this.#uploadMap.set(uploadToken, params);
 
     return uploadToken;
   }
@@ -183,9 +183,15 @@ export class Router {
     return new Promise((resolve, reject) => {
       const { formField, filename } = config;
 
+      const filenameExt = filename ? `${filename}.${config.encoding}` : `screenshot.${config.encoding}`;
+
       if (dataType === 'blob') {
         const formData = new FormData();
-        formData.append(formField || 'file', buf, filename || `screenshot.${config.encoding}`);
+        formData.append(formField || 'file', buf, filenameExt);
+        if (filename) {
+          formData.append('filename', filename);
+        }
+
         return resolve(formData);
       }
 
@@ -207,7 +213,8 @@ export class Router {
         }
 
         const boundary = `--${boundaryMatch[1]}`;
-        const body = Buffer.from(data);``
+        const body = Buffer.from(data);
+        ``;
 
         const rawFormData = parseFormData(body, boundary);
         return res(rawFormData);
