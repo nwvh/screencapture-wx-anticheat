@@ -8,7 +8,7 @@ I'll explain this later, but breifly - Screenshot-Basic is no longer maintained,
 
 ## How to use
 
-Note that there's only server-side exports at the moment. I might add client exports, but only if there's enough requests for it. There will also be an export that will upload through NUI, even though this might be redundant - we'll see.
+You can use the server-side exports, or the `screenshot-basic` backwards compatiable client-export: `requestScreenshotUpload`.
 
 ### JavaScript / TypeScript
 
