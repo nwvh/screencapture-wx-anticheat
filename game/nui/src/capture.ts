@@ -79,6 +79,7 @@ export class Capture {
     if (imageData instanceof Blob) {
       const formData = new FormData();
       formData.append(request.formField ?? 'file', imageData);
+
       return formData;
     }
 

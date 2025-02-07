@@ -3,6 +3,7 @@ import { CaptureOptions, DataType, RequestBody, StreamUploadData, UploadData } f
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { parseFormData } from './form-data';
+import { Blob } from 'node:buffer';
 
 type CfxRequest = {
   address: string;
@@ -223,14 +224,14 @@ export class Router {
   }
 
   async blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = reject;
-      reader.onload = () => {
-        resolve(reader.result as string);
-      };
-
-      reader.readAsDataURL(blob);
+    return new Promise(async (resolve, reject) => {
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        resolve(base64);
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 }

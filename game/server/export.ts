@@ -46,6 +46,12 @@ global.exports(
       remoteConfig: null,
       dataType,
     });
-    emitNet('screencapture:captureScreen', source, token, options, dataType);
+
+    const opts = {
+      ...options,
+      encoding: options.encoding ?? 'webp',
+    }
+    
+    emitNet('screencapture:captureScreen', source, token, opts, dataType);
   },
 );
