@@ -6,7 +6,6 @@ import { setHttpCallback } from '@citizenfx/http-wrapper';
 
 import FormData from 'form-data';
 import fetch from 'node-fetch';
-import { File } from 'formidable';
 import { CaptureOptions, DataType } from './types';
 import { UploadStore } from './upload-store';
 import { readFile, unlink } from 'fs/promises';
@@ -33,7 +32,13 @@ export async function createServer(uploadStore: UploadStore) {
       return;
     }
 
-    const file = files['file'] as File;
+    // dont blame me, but node runtime does not like formidable for some reason
+    const file = files['file'] as any;
+    if (!file) {
+      ctx.status = 400;
+      ctx.body = { status: 'error', message: 'No file provided' };
+      return;
+    }
 
     try {
       const d = await readFile(file.filepath);

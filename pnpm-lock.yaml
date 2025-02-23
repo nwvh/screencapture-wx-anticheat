@@ -26,9 +26,6 @@ importers:
       form-data:
         specifier: ^4.0.1
         version: 4.0.1
-      formidable:
-        specifier: ^3.5.2
-        version: 3.5.2
       koa:
         specifier: ^2.15.4
         version: 2.15.4
@@ -976,9 +973,6 @@ packages:
   formidable@2.1.2:
     resolution: {integrity: sha512-CM3GuJ57US06mlpQ47YcunuUZ9jpm8Vx+P2CGt2j7HpgkKZO/DJYQ0Bobim8G6PFQmK5lOqOOdUXboU+h73A4g==}
 
-  formidable@3.5.2:
-    resolution: {integrity: sha512-Jqc1btCy3QzRbJaICGwKcBfGWuLADRerLzDqi2NwSt/UkXLsHJw2TVResiaoBufHVHy9aSgClOHCeJsSsFLTbg==}
-
   fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
     engines: {node: '>= 0.6'}
@@ -1029,10 +1023,6 @@ packages:
 
   hexoid@1.0.0:
     resolution: {integrity: sha512-QFLV0taWQOZtvIRIAdBChesmogZrtuXvVWsFHZTk2SU+anspqZ2vMnoLg7IE1+Uk16N19APic1BuF8bC8c2m5g==}
-    engines: {node: '>=8'}
-
-  hexoid@2.0.0:
-    resolution: {integrity: sha512-qlspKUK7IlSQv2o+5I7yhUd7TxlOG2Vr5LTa3ve2XSNVKAL/n/u/7KLvKmFNimomDIKvZFXWHv0T12mv7rT8Aw==}
     engines: {node: '>=8'}
 
   http-assert@1.5.0:
@@ -2266,12 +2256,6 @@ snapshots:
       once: 1.4.0
       qs: 6.14.0
 
-  formidable@3.5.2:
-    dependencies:
-      dezalgo: 1.0.4
-      hexoid: 2.0.0
-      once: 1.4.0
-
   fresh@0.5.2: {}
 
   fsevents@2.3.3:
@@ -2325,8 +2309,6 @@ snapshots:
       function-bind: 1.1.2
 
   hexoid@1.0.0: {}
-
-  hexoid@2.0.0: {}
 
   http-assert@1.5.0:
     dependencies:
