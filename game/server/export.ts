@@ -1,4 +1,4 @@
-import { router } from './server';
+import { uploadStore } from './bootstrap';
 import { CallbackFn, CaptureOptions, DataType } from './types';
 
 /* global.exports("serverCaptureStream", (source: number) => {
@@ -20,7 +20,9 @@ global.exports("INTERNAL_stopServerCaptureStream", (source: number) => {
 global.exports(
   'remoteUpload',
   (source: number, url: string, options: CaptureOptions, callback: CallbackFn, dataType: DataType = 'base64') => {
-    const token = router.addUpload({
+    if (!source) return console.error('source is required for serverCapture');
+
+    const token = uploadStore.addUpload({
       callback: callback,
       isRemote: true,
       remoteConfig: {
@@ -40,7 +42,9 @@ global.exports(
 global.exports(
   'serverCapture',
   (source: number, options: CaptureOptions, callback: CallbackFn, dataType: DataType = 'base64') => {
-    const token = router.addUpload({
+    if (!source) return console.error('source is required for serverCapture');
+
+    const token = uploadStore.addUpload({
       callback,
       isRemote: false,
       remoteConfig: null,
@@ -50,8 +54,8 @@ global.exports(
     const opts = {
       ...options,
       encoding: options.encoding ?? 'webp',
-    }
-    
+    };
+
     emitNet('screencapture:captureScreen', source, token, opts, dataType);
   },
 );

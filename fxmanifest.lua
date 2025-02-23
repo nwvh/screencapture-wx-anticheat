@@ -4,6 +4,8 @@ version '0.1.1'
 
 game "gta5"
 
+node_version "22"
+
 client_script "game/dist/client.js"
 server_script "game/dist/server.js"
 
