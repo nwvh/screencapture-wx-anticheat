@@ -1,6 +1,7 @@
 import Koa from 'koa';
-import { koaBody } from 'koa-body';
-import Router from 'koa-router';
+import Router from '@koa/router';
+import { multer } from './multer'
+
 // @ts-ignore - no types
 import { setHttpCallback } from '@citizenfx/http-wrapper';
 
@@ -8,13 +9,15 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { CaptureOptions, DataType } from './types';
 import { UploadStore } from './upload-store';
-import { readFile, unlink } from 'fs/promises';
 
 export async function createServer(uploadStore: UploadStore) {
   const app = new Koa();
   const router = new Router();
+  const upload = multer({
+    storage: multer.memoryStorage()
+  });
 
-  router.post('/image', async (ctx) => {
+  router.post('/image', upload.single("file") as any, async (ctx) => {
     const token = ctx.request.headers['x-screencapture-token'] as string;
     if (!token) {
       ctx.status = 401;
@@ -25,15 +28,7 @@ export async function createServer(uploadStore: UploadStore) {
     const { callback, dataType, isRemote, remoteConfig, url, playerSource, correlationId } =
       uploadStore.getUpload(token);
 
-    const files = ctx.request.files;
-    if (!files) {
-      ctx.status = 400;
-      ctx.body = { status: 'error', message: 'No files provided' };
-      return;
-    }
-
-    // dont blame me, but node runtime does not like formidable for some reason
-    const file = files['file'] as any;
+    const file = ctx.file;
     if (!file) {
       ctx.status = 400;
       ctx.body = { status: 'error', message: 'No file provided' };
@@ -41,9 +36,8 @@ export async function createServer(uploadStore: UploadStore) {
     }
 
     try {
-      const d = await readFile(file.filepath);
-      const buf = await buffer(dataType, d);
-      await unlink(file.filepath);
+
+      const buf = await buffer(dataType, file.buffer);
 
       if (isRemote) {
         const response = await uploadFile(url, remoteConfig, buf, dataType);
@@ -71,12 +65,7 @@ export async function createServer(uploadStore: UploadStore) {
     }
   });
 
-  const koaMiddle = koaBody({
-    multipart: true,
-    patchKoa: true,
-  });
-
-  app.use(koaMiddle).use(router.routes()).use(router.allowedMethods());
+  app.use(router.routes()).use(router.allowedMethods());
 
   setHttpCallback(app.callback());
 }

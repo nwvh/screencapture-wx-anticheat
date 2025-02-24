@@ -9,8 +9,8 @@ const shouldRestart = process.argv.findIndex((arg) => arg === '--restart') !== -
 const buildConfig = {
   server: {
     platform: 'node',
-    target: ['node16'],
-    format: 'cjs',
+    target: ['node21'],
+    format: 'cjs'
   },
   client: {
     platform: 'browser',
