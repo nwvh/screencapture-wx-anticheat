@@ -1,6 +1,7 @@
 import Koa from 'koa';
 import Router from '@koa/router';
-import { multer } from './multer'
+import { readFile } from 'fs/promises';
+import { File } from 'formidable';
 
 // @ts-ignore - no types
 import { setHttpCallback } from '@citizenfx/http-wrapper';
@@ -10,15 +11,13 @@ import fetch from 'node-fetch';
 import { Blob } from 'node:buffer';
 import { CaptureOptions, DataType } from './types';
 import { UploadStore } from './upload-store';
+import koaBody from 'koa-body';
 
 export async function createServer(uploadStore: UploadStore) {
   const app = new Koa();
   const router = new Router();
-  const upload = multer({
-    storage: multer.memoryStorage()
-  });
 
-  router.post('/image', upload.single("file") as any, async (ctx) => {
+  router.post('/image', async (ctx) => {
     const token = ctx.request.headers['x-screencapture-token'] as string;
     if (!token) {
       ctx.status = 401;
@@ -29,16 +28,23 @@ export async function createServer(uploadStore: UploadStore) {
     const { callback, dataType, isRemote, remoteConfig, url, playerSource, correlationId } =
       uploadStore.getUpload(token);
 
-    const file = ctx.file;
+    if (!ctx.request.files || !ctx.request.files['file']) {
+      ctx.status = 400;
+      ctx.body = { status: 'error', message: 'No file provided' };
+    }
+
+    const file = ctx.request.files?.['file'] as File | undefined
     if (!file) {
       ctx.status = 400;
       ctx.body = { status: 'error', message: 'No file provided' };
       return;
     }
 
-    try {
+    const filePath = file.filepath || file.path
+    const fileBuffer = await readFile(filePath)
 
-      const buf = await buffer(dataType, file.buffer);
+    try {
+      const buf = await buffer(dataType, fileBuffer);
 
       if (isRemote) {
         const response = await uploadFile(url, remoteConfig, buf, dataType);
@@ -66,7 +72,13 @@ export async function createServer(uploadStore: UploadStore) {
     }
   });
 
-  app.use(router.routes()).use(router.allowedMethods());
+  app.use(koaBody({
+    patchKoa: true,
+    multipart: true,
+    formLimit: '50mb'
+  }))
+    .use(router.routes())
+    .use(router.allowedMethods());
 
   setHttpCallback(app.callback());
 }
@@ -111,6 +123,7 @@ async function uploadFile(
     const res = await response.json();
     return res;
   } catch (err) {
+    console.error('Error uploading file:', err);
     if (err instanceof Error) {
       throw new Error(err.message);
     }

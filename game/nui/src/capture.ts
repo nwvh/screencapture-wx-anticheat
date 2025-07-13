@@ -42,16 +42,17 @@ export class Capture {
     this.#gameView = createGameView(this.#canvas);
 
     const enc = request.encoding ?? 'png';
-    const qlty = request.quality ?? 0.5;
     let imageData: string | Blob;
     if (request.serverEndpoint || !request.formField) {
       // make sure we don't care about serverEndpoint, only the dataType
-      imageData = await this.createBlob(this.#canvas, enc, qlty);
+      imageData = await this.createBlob(this.#canvas, enc);
     } else {
-      imageData = await this.createBlob(this.#canvas, enc, qlty);
+      imageData = await this.createBlob(this.#canvas, enc);
     }
 
     if (!imageData) return console.error('No image available');
+    console.log('Image data:', imageData);
+    console.log("image size:", imageData.size);
 
     await this.httpUploadImage(request, imageData);
     this.#canvas.remove();
@@ -64,6 +65,7 @@ export class Capture {
       try {
         await fetch(request.serverEndpoint, {
           method: 'POST',
+          mode: 'cors',
           headers: {
             'X-ScreenCapture-Token': request.uploadToken,
           },
@@ -98,7 +100,7 @@ export class Capture {
     });
   }
 
-  createBlob(canvas: HTMLCanvasElement, enc: Encoding, quality = 0.7): Promise<Blob> {
+  createBlob(canvas: HTMLCanvasElement, enc: Encoding): Promise<Blob> {
     return new Promise((resolve, reject) => {
       canvas.toBlob(
         (blob) => {
@@ -109,7 +111,7 @@ export class Capture {
           }
         },
         `image/${enc}`,
-        quality,
+        0.7,
       );
     });
   }

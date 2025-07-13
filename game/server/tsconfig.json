@@ -1,5 +1,5 @@
 {
-	"extends": "@screencapture/typescript-config/base.json",
+	"extends": ["@screencapture/typescript-config/base.json"],
   "compilerOptions": {
     "types": ["@types/node", "@citizenfx/server"],
     "moduleResolution": "node",
