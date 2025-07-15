@@ -1,7 +1,6 @@
 import Koa from 'koa';
 import Router from '@koa/router';
 import { readFile } from 'fs/promises';
-import { File } from 'formidable';
 
 // @ts-ignore - no types
 import { setHttpCallback } from '@citizenfx/http-wrapper';
@@ -33,7 +32,8 @@ export async function createServer(uploadStore: UploadStore) {
       ctx.body = { status: 'error', message: 'No file provided' };
     }
 
-    const file = ctx.request.files?.['file'] as File | undefined
+    // i am so very sorry for this, but FivM and formidable fucking hate each other
+    const file = ctx.request.files?.['file'] as any;
     if (!file) {
       ctx.status = 400;
       ctx.body = { status: 'error', message: 'No file provided' };
