@@ -1,10 +1,10 @@
 # ScreenCapture
 
-ScreenCapture is a being built as a replacement for screenshot-basic in FiveM.
+ScreenCapture is a resource being built as a replacement for screenshot-basic in FiveM.
 
 ## Why build something new?
 
-I'll explain this later, but breifly - Screenshot-Basic is no longer maintained, has it's issues. It's a nightmare for almost everyone to get up and running for some reason (blame FXServer yarn) and it's not up-to-date with anything.
+I'll explain this later, but briefly - Screenshot-Basic is no longer maintained, has it's issues. It's a nightmare for almost everyone to get up and running for some reason (blame FXServer yarn) and it's not up-to-date with anything.
 
 ## How to use
 
@@ -113,7 +113,7 @@ end, "blob")
 
 ## Screenshot Basic compatibility
 
-### This is NOT recommend to use, as you risk expsoing tokens to clients.
+### This is NOT recommended to use, as you risk exposing tokens to clients.
 
 ### requestScreenshotUpload (client-side export)
 
