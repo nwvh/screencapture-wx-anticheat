@@ -16,6 +16,8 @@ export async function createServer(uploadStore: UploadStore) {
   const app = new Koa();
   const router = new Router();
 
+
+
   router.post('/image', async (ctx) => {
     const token = ctx.request.headers['x-screencapture-token'] as string;
     if (!token) {
@@ -75,7 +77,6 @@ export async function createServer(uploadStore: UploadStore) {
   app.use(koaBody({
     patchKoa: true,
     multipart: true,
-    formLimit: '50mb'
   }))
     .use(router.routes())
     .use(router.allowedMethods());
@@ -161,6 +162,8 @@ function createRequestBody(
 async function buffer(dataType: DataType, imageData: Buffer): Promise<string | Buffer> {
   return new Promise(async (resolve, reject) => {
     if (dataType === 'base64') {
+      // i just want to give a big shoutout to CFX for making node22 so fucking shit
+      // to node16: I'm sorry you get blamed for experimental buffer.Blob warnings, its not your fault
       const blob = new Blob([imageData]);
       const dateURL = await blobToBase64(blob);
       resolve(dateURL);
