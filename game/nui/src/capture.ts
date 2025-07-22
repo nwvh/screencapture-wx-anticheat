@@ -20,7 +20,6 @@ export class Capture {
   #gameView: any;
   #canvas: HTMLCanvasElement | null = null;
 
-  // Maximum resolution to prevent oversized payloads
   private readonly MAX_WIDTH = 1920;
   private readonly MAX_HEIGHT = 1080;
 
@@ -45,18 +44,18 @@ export class Capture {
   private calculateDimensions(request: CaptureRequest): { width: number; height: number } {
     const originalWidth = window.innerWidth;
     const originalHeight = window.innerHeight;
-    
+
     const maxWidth = request.maxWidth || this.MAX_WIDTH;
     const maxHeight = request.maxHeight || this.MAX_HEIGHT;
-    
+
     if (originalWidth <= maxWidth && originalHeight <= maxHeight) {
       return { width: originalWidth, height: originalHeight };
     }
-    
+
     const scaleX = maxWidth / originalWidth;
     const scaleY = maxHeight / originalHeight;
     const scale = Math.min(scaleX, scaleY);
-    
+
     return {
       width: Math.floor(originalWidth * scale),
       height: Math.floor(originalHeight * scale)
@@ -65,7 +64,6 @@ export class Capture {
 
   async captureScreen(request: CaptureRequest) {
     this.#canvas = document.createElement('canvas');
-    
 
     const { width, height } = this.calculateDimensions(request);
     this.#canvas.width = width;
@@ -74,21 +72,21 @@ export class Capture {
     console.log(`Capturing at ${width}x${height} (original: ${window.innerWidth}x${window.innerHeight})`);
 
     this.#gameView = createGameView(this.#canvas);
-    
-  
+
+
     this.#gameView.resize(width, height);
 
     const enc = request.encoding ?? 'png';
     let imageData: string | Blob;
     if (request.serverEndpoint || !request.formField) {
       // make sure we don't care about serverEndpoint, only the dataType
-      imageData = await this.createBlob(this.#canvas, enc);
+      imageData = await this.createBlob(this.#canvas, enc, request.quality);
     } else {
-      imageData = await this.createBlob(this.#canvas, enc);
+      imageData = await this.createBlob(this.#canvas, enc, request.quality);
     }
 
     if (!imageData) return console.error('No image available');
-    
+
     await this.httpUploadImage(request, imageData);
     this.#canvas.remove();
   }
@@ -135,21 +133,26 @@ export class Capture {
     });
   }
 
-  createBlob(canvas: HTMLCanvasElement, enc: Encoding): Promise<Blob> {
+  createBlob(canvas: HTMLCanvasElement, enc: Encoding, requestQuality?: number): Promise<Blob> {
     return new Promise((resolve, reject) => {
       // Calculate adaptive quality based on canvas size
       const pixelCount = canvas.width * canvas.height;
       let quality = 0.7; // default
-      
-      // wtf am I doing
-      if (pixelCount > 2073600) { //1920x1080
-        quality = 0.5;
-      } else if (pixelCount > 1440000) { //1200x1200
-        quality = 0.6;
+
+      if (requestQuality) {
+        quality = requestQuality;
+      } else {
+        // wtf am I doing
+        if (pixelCount > 2073600) { //1920x1080
+          quality = 0.5;
+        } else if (pixelCount > 1440000) { //1200x1200
+          quality = 0.6;
+        }
       }
-      
+
+
       console.log(`Using quality ${quality} for ${canvas.width}x${canvas.height} (${pixelCount} pixels)`);
-      
+
       canvas.toBlob(
         (blob) => {
           if (blob) {
