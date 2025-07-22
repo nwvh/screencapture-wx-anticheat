@@ -12,11 +12,17 @@ type CaptureRequest = {
   serverEndpoint: string;
   formField: string;
   dataType: 'blob' | 'base64';
+  maxWidth?: number;
+  maxHeight?: number;
 };
 
 export class Capture {
   #gameView: any;
   #canvas: HTMLCanvasElement | null = null;
+
+  // Maximum resolution to prevent oversized payloads
+  private readonly MAX_WIDTH = 1920;
+  private readonly MAX_HEIGHT = 1080;
 
   start() {
     window.addEventListener('message', async (event) => {
@@ -34,12 +40,43 @@ export class Capture {
     });
   }
 
+  // fuck me
+  // i guess this is the downside of using webgl??
+  private calculateDimensions(request: CaptureRequest): { width: number; height: number } {
+    const originalWidth = window.innerWidth;
+    const originalHeight = window.innerHeight;
+    
+    const maxWidth = request.maxWidth || this.MAX_WIDTH;
+    const maxHeight = request.maxHeight || this.MAX_HEIGHT;
+    
+    if (originalWidth <= maxWidth && originalHeight <= maxHeight) {
+      return { width: originalWidth, height: originalHeight };
+    }
+    
+    const scaleX = maxWidth / originalWidth;
+    const scaleY = maxHeight / originalHeight;
+    const scale = Math.min(scaleX, scaleY);
+    
+    return {
+      width: Math.floor(originalWidth * scale),
+      height: Math.floor(originalHeight * scale)
+    };
+  }
+
   async captureScreen(request: CaptureRequest) {
     this.#canvas = document.createElement('canvas');
-    this.#canvas.width = window.innerWidth;
-    this.#canvas.height = window.innerHeight;
+    
+
+    const { width, height } = this.calculateDimensions(request);
+    this.#canvas.width = width;
+    this.#canvas.height = height;
+
+    console.log(`Capturing at ${width}x${height} (original: ${window.innerWidth}x${window.innerHeight})`);
 
     this.#gameView = createGameView(this.#canvas);
+    
+  
+    this.#gameView.resize(width, height);
 
     const enc = request.encoding ?? 'png';
     let imageData: string | Blob;
@@ -51,9 +88,7 @@ export class Capture {
     }
 
     if (!imageData) return console.error('No image available');
-    console.log('Image data:', imageData);
-    console.log("image size:", imageData.size);
-
+    
     await this.httpUploadImage(request, imageData);
     this.#canvas.remove();
   }
@@ -102,16 +137,30 @@ export class Capture {
 
   createBlob(canvas: HTMLCanvasElement, enc: Encoding): Promise<Blob> {
     return new Promise((resolve, reject) => {
+      // Calculate adaptive quality based on canvas size
+      const pixelCount = canvas.width * canvas.height;
+      let quality = 0.7; // default
+      
+      // wtf am I doing
+      if (pixelCount > 2073600) { //1920x1080
+        quality = 0.5;
+      } else if (pixelCount > 1440000) { //1200x1200
+        quality = 0.6;
+      }
+      
+      console.log(`Using quality ${quality} for ${canvas.width}x${canvas.height} (${pixelCount} pixels)`);
+      
       canvas.toBlob(
         (blob) => {
           if (blob) {
+            console.log(`Generated blob: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
             resolve(blob);
           } else {
             reject('No blob available');
           }
         },
         `image/${enc}`,
-        0.7,
+        quality,
       );
     });
   }

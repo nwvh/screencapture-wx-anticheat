@@ -1,24 +1,25 @@
 import Koa from 'koa';
 import Router from '@koa/router';
-import { readFile } from 'fs/promises';
 
 // @ts-ignore - no types
 import { setHttpCallback } from '@citizenfx/http-wrapper';
+import { multer } from './multer'
 
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { Blob } from 'node:buffer';
 import { CaptureOptions, DataType } from './types';
 import { UploadStore } from './upload-store';
-import koaBody from 'koa-body';
+
+const upload = multer({
+  storage: multer.memoryStorage()
+});
 
 export async function createServer(uploadStore: UploadStore) {
   const app = new Koa();
   const router = new Router();
 
-
-
-  router.post('/image', async (ctx) => {
+  router.post('/image', upload.single('file') as any, async (ctx) => {
     const token = ctx.request.headers['x-screencapture-token'] as string;
     if (!token) {
       ctx.status = 401;
@@ -29,24 +30,15 @@ export async function createServer(uploadStore: UploadStore) {
     const { callback, dataType, isRemote, remoteConfig, url, playerSource, correlationId } =
       uploadStore.getUpload(token);
 
-    if (!ctx.request.files || !ctx.request.files['file']) {
+    if (!ctx.files) {
       ctx.status = 400;
       ctx.body = { status: 'error', message: 'No file provided' };
     }
 
-    // i am so very sorry for this, but FivM and formidable fucking hate each other
-    const file = ctx.request.files?.['file'] as any;
-    if (!file) {
-      ctx.status = 400;
-      ctx.body = { status: 'error', message: 'No file provided' };
-      return;
-    }
-
-    const filePath = file.filepath || file.path
-    const fileBuffer = await readFile(filePath)
+    const file = ctx.file;
 
     try {
-      const buf = await buffer(dataType, fileBuffer);
+      const buf = await buffer(dataType, file.buffer);
 
       if (isRemote) {
         const response = await uploadFile(url, remoteConfig, buf, dataType);
@@ -74,10 +66,7 @@ export async function createServer(uploadStore: UploadStore) {
     }
   });
 
-  app.use(koaBody({
-    patchKoa: true,
-    multipart: true,
-  }))
+  app
     .use(router.routes())
     .use(router.allowedMethods());
 

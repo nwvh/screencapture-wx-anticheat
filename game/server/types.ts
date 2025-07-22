@@ -32,6 +32,8 @@ export interface CaptureOptions {
   formField?: string;
   filename?: string;
   encoding?: string;
+  maxWidth?: number;
+  maxHeight?: number;
 }
 
 export type CallbackFn = (data: unknown, _playerSource?: number, correlationId?: string) => void;

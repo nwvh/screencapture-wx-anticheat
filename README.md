@@ -111,6 +111,36 @@ exports.screencapture:remoteUpload(args[1], "https://api.fivemanage.com/api/imag
 end, "blob")
 ```
 
+## High-Resolution Display Optimization
+
+For users with 4K, ultrawide, or other high-resolution displays, you can customize the maximum screenshot resolution to balance quality and payload size:
+
+```lua
+-- Allow higher resolution for better quality (may increase upload time)
+exports.screencapture:remoteUpload(args[1], "https://api.fivemanage.com/api/image", {
+    encoding = "webp",
+    maxWidth = 2560,
+    maxHeight = 1440,
+    headers = {
+        ["Authorization"] = ""
+    }
+}, function(data)
+    print(data.url)
+end, "blob")
+
+-- Use lower resolution for faster uploads
+exports.screencapture:remoteUpload(args[1], "https://api.fivemanage.com/api/image", {
+    encoding = "webp",
+    maxWidth = 1280,
+    maxHeight = 720,
+    headers = {
+        ["Authorization"] = ""
+    }
+}, function(data)
+    print(data.url)
+end, "blob")
+```
+
 ## Screenshot Basic compatibility
 
 ### This is NOT recommended to use, as you risk exposing tokens to clients.
