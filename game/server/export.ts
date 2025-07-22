@@ -44,17 +44,17 @@ global.exports(
   (source: number, options: CaptureOptions, callback: CallbackFn, dataType: DataType = 'base64') => {
     if (!source) return console.error('source is required for serverCapture');
 
-    const token = uploadStore.addUpload({
-      callback,
-      isRemote: false,
-      remoteConfig: null,
-      dataType,
-    });
-
     const opts = {
       ...options,
       encoding: options.encoding ?? 'webp',
     };
+
+    const token = uploadStore.addUpload({
+      callback,
+      isRemote: false,
+      remoteConfig: opts, // Store options here so we have access to encoding
+      dataType,
+    });
 
     emitNet('screencapture:captureScreen', source, token, opts, dataType);
   },

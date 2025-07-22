@@ -38,7 +38,9 @@ export async function createServer(uploadStore: UploadStore) {
     const file = ctx.file;
 
     try {
-      const buf = await buffer(dataType, file.buffer);
+      // Get encoding from remoteConfig or default to 'webp'
+      const encoding = remoteConfig?.encoding || 'webp';
+      const buf = await buffer(dataType, file.buffer, encoding);
 
       if (isRemote) {
         const response = await uploadFile(url, remoteConfig, buf, dataType);
@@ -148,28 +150,45 @@ function createRequestBody(
   });
 }
 
-async function buffer(dataType: DataType, imageData: Buffer): Promise<string | Buffer> {
+async function buffer(dataType: DataType, imageData: Buffer, encoding: string = 'webp'): Promise<string | Buffer> {
   return new Promise(async (resolve, reject) => {
     if (dataType === 'base64') {
       // i just want to give a big shoutout to CFX for making node22 so fucking shit
       // to node16: I'm sorry you get blamed for experimental buffer.Blob warnings, its not your fault
       const blob = new Blob([imageData]);
-      const dateURL = await blobToBase64(blob);
-      resolve(dateURL);
+      const dataURL = await blobToBase64(blob, encoding);
+      resolve(dataURL);
     } else {
       resolve(imageData);
     }
   });
 }
 
-async function blobToBase64(blob: Blob): Promise<string> {
+async function blobToBase64(blob: Blob, encoding: string = 'webp'): Promise<string> {
   return new Promise(async (resolve, reject) => {
     try {
       const arrayBuffer = await blob.arrayBuffer();
       const base64 = Buffer.from(arrayBuffer).toString('base64');
-      resolve(base64);
+
+      const mimeType = getMimeType(encoding);
+      
+      resolve(`data:${mimeType};base64,${base64}`);
     } catch (err) {
       reject(err);
     }
   });
+}
+
+function getMimeType(encoding: string): string {
+  switch (encoding.toLowerCase()) {
+    case 'png':
+      return 'image/png';
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'webp':
+      return 'image/webp';
+    default:
+      return 'image/webp';
+  }
 }
