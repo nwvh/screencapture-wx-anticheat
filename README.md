@@ -143,9 +143,10 @@ end, "blob")
 
 ## Screenshot Basic compatibility
 
-### This is NOT recommended to use, as you risk exposing tokens to clients.
+
 
 ### requestScreenshotUpload (client-side export)
+#### This is NOT recommended to use, as you risk exposing tokens to clients.
 
 ```lua
 exports['screencapture']:requestScreenshotUpload('https://api.fivemanage.com/api/image', 'file', {
@@ -157,6 +158,18 @@ exports['screencapture']:requestScreenshotUpload('https://api.fivemanage.com/api
     local resp = json.decode(data)
     print(resp.url);
     TriggerEvent('chat:addMessage', { template = '<img src="{0}" style="max-width: 300px;" />', args = { resp.url } })
+end)
+```
+
+### requestScreenshot (client-side export)
+
+This export returns a base64 data URI of the screenshot, similar to screenshot-basic. It does not upload the image, but provides the raw image data to your callback.
+
+```lua
+exports['screencapture']:requestScreenshot({ encoding = 'jpg' }, function(data)
+    -- 'data' is a base64-encoded image string (data URI)
+    print(data)
+    -- You can use the data URI directly in HTML or upload it manually
 end)
 ```
 
