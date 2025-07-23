@@ -12,3 +12,5 @@ files {
     "game/nui/dist/index.html",
     "game/nui/dist/**/*",
 }
+
+provide 'screenshot-basic'

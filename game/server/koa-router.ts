@@ -27,6 +27,9 @@ export async function createServer(uploadStore: UploadStore) {
       return;
     }
 
+    ctx.response.append('Access-Control-Allow-Origin', '*');
+    ctx.response.append('Access-Control-Allow-Methods', 'GET, POST');
+
     const { callback, dataType, isRemote, remoteConfig, url, playerSource, correlationId } =
       uploadStore.getUpload(token);
 
