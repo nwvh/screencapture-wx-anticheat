@@ -9,7 +9,11 @@ type CaptureRequest = {
   quality: number;
   headers: Headers;
   uploadToken: string;
-  serverEndpoint: string;
+
+  serverEndpoint?: string;
+  // only used for screenshot-basic requestScreenshot export
+  callbackUrl?: string;
+  correlationId?: string;
   formField: string;
   dataType: 'blob' | 'base64';
   maxWidth?: number;
@@ -78,9 +82,10 @@ export class Capture {
 
     const enc = request.encoding ?? 'png';
     let imageData: string | Blob;
-    if (request.serverEndpoint || !request.formField) {
-      // make sure we don't care about serverEndpoint, only the dataType
-      imageData = await this.createBlob(this.#canvas, enc, request.quality);
+    // callbackUrl is only used for screenshot-basic requestScreenshot export
+    // everything else will be processed by server-side code
+    if (request.callbackUrl) { 
+      imageData = await this.createDataURL(this.#canvas, enc, request.quality);
     } else {
       imageData = await this.createBlob(this.#canvas, enc, request.quality);
     }
@@ -93,6 +98,20 @@ export class Capture {
 
   async httpUploadImage(request: CaptureRequest, imageData: string | Blob) {
     const reqBody = this.createRequestBody(request, imageData);
+
+    if (request.callbackUrl) {
+      try {
+        await fetch(request.callbackUrl, {
+          method: 'POST',
+          mode: 'cors',
+          body: reqBody,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+
+      return;
+    }
 
     if (request.serverEndpoint) {
       try {
@@ -113,18 +132,19 @@ export class Capture {
   createRequestBody(request: CaptureRequest, imageData: string | Blob): BodyInit {
     if (imageData instanceof Blob) {
       const formData = new FormData();
-      formData.append(request.formField ?? 'file', imageData);
+      // request.formField should only be used on the server-side when we upload to a third party service
+      formData.append('file', imageData);
 
       return formData;
     }
 
     // dataType is just here in order to know what to do with the data when we get it back
-    return JSON.stringify({ imageData: imageData, dataType: request.dataType });
+    return JSON.stringify({ data: imageData, id: request.correlationId });
   }
 
-  createDataURL(canvas: HTMLCanvasElement): Promise<string> {
+  createDataURL(canvas: HTMLCanvasElement, enc: Encoding, requestQuality?: number): Promise<string> {
     return new Promise((resolve, reject) => {
-      const url = canvas.toDataURL('image/webp', 0.7);
+      const url = canvas.toDataURL(`image/${enc}`, requestQuality);
       if (!url) {
         reject('No data URL available');
       }
@@ -149,7 +169,6 @@ export class Capture {
           quality = 0.6;
         }
       }
-
 
       console.log(`Using quality ${quality} for ${canvas.width}x${canvas.height} (${pixelCount} pixels)`);
 

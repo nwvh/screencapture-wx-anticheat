@@ -1,6 +1,8 @@
 import { netEventController } from './event';
-import { CaptureRequest, RequestScreenshotUploadCB } from './types';
+import { CaptureRequest, RequestScreenshotUploadCB, ScreenshotCreatedBody } from './types';
 import { uuidv4 } from './utils';
+
+RegisterNuiCallbackType('screenshot_created');
 
 const clientCaptureMap = new Map<string, RequestScreenshotUploadCB>();
 
@@ -19,6 +21,20 @@ onNet('screencapture:INTERNAL_uploadComplete', (response: unknown, correlationId
   if (callback) {
     callback(response);
     clientCaptureMap.delete(correlationId);
+  }
+});
+
+
+// screenshot-basic compatibility
+on('__cfx_nui:screenshot_created', (body: ScreenshotCreatedBody, cb: (arg: any) => void) => {
+  cb(true);
+
+  if (body.id !== undefined && clientCaptureMap.has(body.id)) {
+    const callback = clientCaptureMap.get(body.id);
+    if (callback) {
+      callback(body.data);
+      clientCaptureMap.delete(body.id);
+    }
   }
 });
 
@@ -62,6 +78,29 @@ global.exports(
     });
   },
 );
+
+// returns base64 data URI
+global.exports('requestScreenshot', (options: CaptureRequest, callback: RequestScreenshotUploadCB) => {
+  const correlationId = uuidv4();
+
+  const realOptions = (callback !== undefined) ? options : {
+    encoding: 'jpg'
+  } as CaptureRequest;
+
+  // :)
+  const realCb = (typeof callback === 'function') ? callback : (typeof options === 'function' ? options : undefined);
+  if (typeof realCb !== 'function') {
+    return console.error('Callback is not a function');
+  }
+
+  clientCaptureMap.set(correlationId, realCb);
+
+  createImageCaptureMessage({
+    ...realOptions,
+    callbackUrl: `http://${GetCurrentResourceName()}/screenshot_created`,
+    correlationId,
+  });
+});
 
 function createImageCaptureMessage(options: CaptureRequest) {
   SendNUIMessage({
