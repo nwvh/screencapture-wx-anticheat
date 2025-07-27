@@ -1,10 +1,11 @@
+import { request } from 'http';
 import { netEventController } from './event';
 import { CaptureRequest, RequestScreenshotUploadCB, ScreenshotCreatedBody } from './types';
-import { uuidv4 } from './utils';
-
-RegisterNuiCallbackType('screenshot_created');
+import { exportHandler, uuidv4 } from './utils';
 
 const clientCaptureMap = new Map<string, RequestScreenshotUploadCB>();
+
+RegisterNuiCallbackType('screenshot_created');
 
 onNet('screencapture:captureScreen', (token: string, options: object, dataType: string) => {
   SendNUIMessage({
@@ -38,6 +39,45 @@ on('__cfx_nui:screenshot_created', (body: ScreenshotCreatedBody, cb: (arg: any) 
   }
 });
 
+async function requestScreenshotUpload(
+  url: string,
+  formField: string,
+  optionsOrCB: CaptureRequest | RequestScreenshotUploadCB,
+  callback: RequestScreenshotUploadCB,
+) {
+  // forgive me
+  const isOptions = typeof optionsOrCB === 'object' && optionsOrCB !== null;
+  const realOptions = isOptions
+    ? (optionsOrCB as CaptureRequest)
+    : ({ headers: {}, encoding: 'webp' } as CaptureRequest);
+  const realCallback = isOptions
+    ? (callback as RequestScreenshotUploadCB)
+    : (optionsOrCB as RequestScreenshotUploadCB);
+
+  const correlationId = uuidv4();
+  clientCaptureMap.set(correlationId, realCallback);
+
+  const token = await netEventController<string>('screencapture:INTERNAL_requestUploadToken', {
+    ...realOptions,
+    formField,
+    url,
+    correlationId,
+  });
+
+  if (!token) {
+    return console.error('Failed to get upload token');
+  }
+
+  return createImageCaptureMessage({
+    ...realOptions,
+    formField,
+    url,
+    uploadToken: token,
+    dataType: 'blob',
+  });
+}
+
+exportHandler('requestScreenshotUpload', requestScreenshotUpload);
 global.exports(
   'requestScreenshotUpload',
   async (
@@ -46,41 +86,11 @@ global.exports(
     optionsOrCB: CaptureRequest | RequestScreenshotUploadCB,
     callback: RequestScreenshotUploadCB,
   ) => {
-    // forgive me
-    const isOptions = typeof optionsOrCB === 'object' && optionsOrCB !== null;
-    const realOptions = isOptions
-      ? (optionsOrCB as CaptureRequest)
-      : ({ headers: {}, encoding: 'webp' } as CaptureRequest);
-    const realCallback = isOptions
-      ? (callback as RequestScreenshotUploadCB)
-      : (optionsOrCB as RequestScreenshotUploadCB);
-
-    const correlationId = uuidv4();
-    clientCaptureMap.set(correlationId, realCallback);
-
-    const token = await netEventController<string>('screencapture:INTERNAL_requestUploadToken', {
-      ...realOptions,
-      formField,
-      url,
-      correlationId,
-    });
-
-    if (!token) {
-      return console.error('Failed to get upload token');
-    }
-
-    return createImageCaptureMessage({
-      ...realOptions,
-      formField,
-      url,
-      uploadToken: token,
-      dataType: 'blob',
-    });
-  },
+    return await requestScreenshotUpload(url, formField, optionsOrCB, callback);
+  }
 );
 
-// returns base64 data URI
-global.exports('requestScreenshot', (options: CaptureRequest, callback: RequestScreenshotUploadCB) => {
+function requestScreenshot(options: CaptureRequest, callback: RequestScreenshotUploadCB) {
   const correlationId = uuidv4();
 
   const realOptions = (callback !== undefined) ? options : {
@@ -100,6 +110,11 @@ global.exports('requestScreenshot', (options: CaptureRequest, callback: RequestS
     callbackUrl: `http://${GetCurrentResourceName()}/screenshot_created`,
     correlationId,
   });
+}
+
+exportHandler('requestScreenshot', requestScreenshot);
+global.exports('requestScreenshot', (options: CaptureRequest, callback: RequestScreenshotUploadCB) => {
+  return requestScreenshot(options, callback);
 });
 
 function createImageCaptureMessage(options: CaptureRequest) {
