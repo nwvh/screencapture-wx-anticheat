@@ -1,5 +1,6 @@
 import Koa from 'koa';
 import Router from '@koa/router';
+import { writeFileSync} from 'fs';
 
 // @ts-ignore - no types
 import { setHttpCallback } from '@citizenfx/http-wrapper';
@@ -30,7 +31,7 @@ export async function createServer(uploadStore: UploadStore) {
     ctx.response.append('Access-Control-Allow-Origin', '*');
     ctx.response.append('Access-Control-Allow-Methods', 'GET, POST');
 
-    const { callback, dataType, isRemote, remoteConfig, url, playerSource, correlationId } =
+    const { callback, dataType, isRemote, remoteConfig, url, playerSource, correlationId, screenshotBasicCompatibility } =
       uploadStore.getUpload(token);
 
     if (!ctx.files) {
@@ -41,30 +42,55 @@ export async function createServer(uploadStore: UploadStore) {
     const file = ctx.file;
 
     try {
-      // Get encoding from remoteConfig or default to 'webp'
       const encoding = remoteConfig?.encoding || 'webp';
+      // base64 or buffer
       const buf = await buffer(dataType, file.buffer, encoding);
 
       if (isRemote) {
         const response = await uploadFile(url, remoteConfig, buf, dataType);
 
-        // this is only when we return data back to the client
-        if (playerSource && correlationId) {
-          callback(response, playerSource, correlationId);
+        if (screenshotBasicCompatibility) {
+          (callback as any)(false, response);
         } else {
-          callback(response);
+          if (playerSource && correlationId) {
+            (callback as any)(response, playerSource, correlationId);
+          } else {
+            (callback as any)(response);
+          }
         }
       } else {
-        callback(buf);
+        if (screenshotBasicCompatibility) {
+          // this will be a base64 string
+          if (remoteConfig?.fileName) {
+            const filename = saveFileToDisk(remoteConfig.fileName, buf);
+            (callback as any)(false, filename);
+          } else {
+            (callback as any)(false, buf);
+          }
+        } else {
+          (callback as any)(buf);
+        }
       }
 
       ctx.status = 200;
       ctx.body = { status: 'success' };
     } catch (err) {
       if (err instanceof Error) {
+        if (screenshotBasicCompatibility) {
+          (callback as any)(err.message, null);
+        } else {
+          (callback as any)(err);
+        }
+        
         ctx.status = 500;
         ctx.body = { status: 'error', message: err.message };
       } else {
+        if (screenshotBasicCompatibility) {
+          (callback as any)('An unknown error occurred', null);
+        } else {
+          (callback as any)(new Error('An unknown error occurred'));
+        }
+        
         ctx.status = 500;
         ctx.body = { status: 'error', message: 'An unknown error occurred' };
       }
@@ -193,5 +219,15 @@ function getMimeType(encoding: string): string {
       return 'image/webp';
     default:
       return 'image/webp';
+  }
+}
+
+function saveFileToDisk(fileName: string, data: string | Buffer) {
+  try {
+    writeFileSync(fileName, data);
+    return fileName;
+  } catch (err) {
+    console.error('Error saving file to disk:', err);
+    throw new Error('Error saving file to disk');
   }
 }

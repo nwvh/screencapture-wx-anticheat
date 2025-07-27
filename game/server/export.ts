@@ -1,5 +1,6 @@
 import { uploadStore } from './bootstrap';
-import { CallbackFn, CaptureOptions, DataType } from './types';
+import { CallbackFn, CaptureOptions, DataType, ScreenshotBasicCallbackFn, createScreenshotBasicUploadData, createRegularUploadData } from './types';
+import { exportHandler } from './utils';
 
 /* global.exports("serverCaptureStream", (source: number) => {
   const token = router.addStream({
@@ -22,7 +23,7 @@ global.exports(
   (source: number, url: string, options: CaptureOptions, callback: CallbackFn, dataType: DataType = 'base64') => {
     if (!source) return console.error('source is required for serverCapture');
 
-    const token = uploadStore.addUpload({
+    const token = uploadStore.addUpload(createRegularUploadData({
       callback: callback,
       isRemote: true,
       remoteConfig: {
@@ -31,7 +32,7 @@ global.exports(
       },
       url,
       dataType,
-    });
+    }));
 
     emitNet('screencapture:captureScreen', source, token, options, dataType);
   },
@@ -49,13 +50,44 @@ global.exports(
       encoding: options.encoding ?? 'webp',
     };
 
-    const token = uploadStore.addUpload({
+    const token = uploadStore.addUpload(createRegularUploadData({
       callback,
       isRemote: false,
-      remoteConfig: opts, // Store options here so we have access to encoding
+      remoteConfig: opts,
       dataType,
-    });
+    }));
 
     emitNet('screencapture:captureScreen', source, token, opts, dataType);
   },
 );
+
+// screeenshot-basic backwards compatibility
+function requestClientScreenshot(source: number, options: CaptureOptions, callback: ScreenshotBasicCallbackFn) {
+  if (!source) return console.error('source is required for requestClientScreenshot');
+
+  const opts = {
+    ...options,
+    encoding: options.encoding ?? 'webp',
+  };
+
+  const isBlob = options.fileName ? true : false;
+
+  const token = uploadStore.addUpload(createScreenshotBasicUploadData({
+    callback,
+    isRemote: false,
+    remoteConfig: opts,
+    dataType: isBlob ? 'blob' : 'base64',
+  }));
+
+  emitNet('screencapture:captureScreen', source, token, opts, isBlob ? 'blob' : 'base64');
+}
+
+global.exports(
+  'requestClientScreenshot',
+  (source: number, options: CaptureOptions, callback: ScreenshotBasicCallbackFn) => {
+    requestClientScreenshot(source, options, callback);
+  },
+);
+exportHandler("requestClientScreenshot", (source: number, options: CaptureOptions, callback: ScreenshotBasicCallbackFn) => {
+  requestClientScreenshot(source, options, callback);
+});

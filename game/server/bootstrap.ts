@@ -1,7 +1,7 @@
 import { createServer } from './koa-router';
 import './export';
 import { eventController } from './event';
-import { RequestUploadToken } from './types';
+import { RequestUploadToken, createRegularUploadData } from './types';
 import { UploadStore } from './upload-store';
 
 export const uploadStore = new UploadStore();
@@ -23,7 +23,7 @@ eventController<RequestUploadToken, string>(
       emitNet('screencapture:INTERNAL_uploadComplete', playerSource, JSON.stringify(response), correlationId);
     }
 
-    const token = uploadStore.addUpload({
+    const token = uploadStore.addUpload(createRegularUploadData({
       callback: uploadCallback,
       isRemote: true,
       remoteConfig: {
@@ -36,7 +36,7 @@ eventController<RequestUploadToken, string>(
       dataType: 'blob',
       playerSource: ctx.source,
       correlationId: body.correlationId,
-    });
+    }));
 
     return send(token);
   },
