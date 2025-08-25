@@ -16,9 +16,19 @@ const upload = multer({
   storage: multer.memoryStorage()
 });
 
+declare function GetCurrentResourceName(): string;
+
 export async function createServer(uploadStore: UploadStore) {
   const app = new Koa();
   const router = new Router();
+
+  router.options('/image', (ctx) => {
+    ctx.status = 200;
+    ctx.set('Access-Control-Allow-Origin', `${ctx.request.headers['origin']}`);
+    ctx.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    ctx.set('Access-Control-Allow-Headers', 'x-screencapture-token');
+    return;
+  });
 
   router.post('/image', upload.single('file') as any, async (ctx) => {
     const token = ctx.request.headers['x-screencapture-token'] as string;
