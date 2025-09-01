@@ -73,7 +73,7 @@ export class Capture {
     this.#canvas.width = width;
     this.#canvas.height = height;
 
-    console.log(`Capturing at ${width}x${height} (original: ${window.innerWidth}x${window.innerHeight})`);
+    // console.log(`Capturing at ${width}x${height} (original: ${window.innerWidth}x${window.innerHeight})`);
 
     this.#gameView = createGameView(this.#canvas);
 
@@ -84,7 +84,7 @@ export class Capture {
     let imageData: string | Blob;
     // callbackUrl is only used for screenshot-basic requestScreenshot export
     // everything else will be processed by server-side code
-    if (request.callbackUrl) { 
+    if (request.callbackUrl) {
       imageData = await this.createDataURL(this.#canvas, enc, request.quality);
     } else {
       imageData = await this.createBlob(this.#canvas, enc, request.quality);
@@ -170,12 +170,12 @@ export class Capture {
         }
       }
 
-      console.log(`Using quality ${quality} for ${canvas.width}x${canvas.height} (${pixelCount} pixels)`);
+      // console.log(`Using quality ${quality} for ${canvas.width}x${canvas.height} (${pixelCount} pixels)`);
 
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            console.log(`Generated blob: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+            // console.log(`Generated blob: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
             resolve(blob);
           } else {
             reject('No blob available');

@@ -22,7 +22,7 @@ export class CaptureStream {
       const data = event.data as CaptureStreamRequest;
 
       if (data.action === CaptureStreamActions.Start) {
-        console.log('got message to start streaming');
+        // console.log('got message to start streaming');
         this.stream(data);
       }
 
@@ -52,7 +52,7 @@ export class CaptureStream {
 
     this.#recorder.ondataavailable = (ev) => {
       if (ev.data.size > 0) {
-        console.log('data size', ev.data.size);
+        // console.log('data size', ev.data.size);
         this.#chunks.push(ev.data);
         // send chunk to http handler with corrID
       }
@@ -63,7 +63,7 @@ export class CaptureStream {
     };
 
     this.#recorder.onstop = async () => {
-      console.log('rec stop');
+      // console.log('rec stop');
       await this.uploadVideo(request);
       if (this.#canvas) return this.#canvas.remove();
     };
@@ -82,20 +82,20 @@ export class CaptureStream {
   }
 
   async uploadVideo(request: CaptureStreamRequest) {
-    console.log('chunk len', this.#chunks.length);
+    // console.log('chunk len', this.#chunks.length);
 
     const blob = new Blob(this.#chunks, { type: this.#recorder?.mimeType });
-    console.log('blob size', blob.size);
+    // console.log('blob size', blob.size);
 
     if (blob.size === 0) {
-      console.error('Blob is empty, skipping upload');
+      // console.error('Blob is empty, skipping upload');
       return;
     }
 
     const formData = new FormData();
     formData.append(request.formField || 'file', blob, 'capture.webm');
 
-    console.log('request', request);
+    // console.log('request', request);
 
     try {
       // Fetch without setting 'Content-Type' manually
@@ -111,9 +111,9 @@ export class CaptureStream {
         throw new Error(`Failed to upload video. Status: ${response.status}`);
       }
 
-      console.log('Video uploaded successfully');
+      // console.log('Video uploaded successfully');
     } catch (err) {
-      console.error('Error uploading video', err);
+      // console.error('Error uploading video', err);
     }
   }
 }
